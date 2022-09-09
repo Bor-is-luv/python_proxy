@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+
+  redis:
+    image: redis
+    restart: always
+    container_name: test_task_redis
+    command: redis-server
+    ports:
+      - 6379:6379
+
+  test_task:
+    build: ./proxy
+    container_name: test_task
+    networks:
+      - default
+    depends_on:
+      - redis
+    restart: always
+    ports:
+      - 5000:5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthcheck"]
+      interval: 15s
+      timeout: 10s
+      retries: 1
+      start_period: 30s
+
+  test_script:
+    build: ./test_targets
+    container_name: test_script
+    networks:
+      - default
+    depends_on:
+      test_task:
+        condition: service_healthy
+    ports:
+      - 5001:5001
+      - 5002:5002
+      - 5003:5003
+      - 5004:5004
+      - 5005:5005
